@@ -1,0 +1,65 @@
+import robocode.*;
+
+public class RoboAzulCobalto extends AdvancedRobot {
+
+    // Variáveis para controlar a direção dos movimentos
+    private int moveDirection = 1;
+
+    public void run() {
+        // Define as cores do robô
+        setBodyColor(java.awt.Color.blue);
+        setGunColor(java.awt.Color.blue);
+        setRadarColor(java.awt.Color.blue);
+        setBulletColor(java.awt.Color.blue);
+        setScanColor(java.awt.Color.blue);
+
+        // Loop principal do robô
+        while (true) {
+            // Move para frente ou para trás, desviando de tiros
+            setAhead(100 * moveDirection);
+            execute();
+
+            // Gira o radar em círculo para procurar inimigos
+            setTurnRadarRight(360);
+            execute();
+        }
+    }
+
+    public void onScannedRobot(ScannedRobotEvent e) {
+        // Se um inimigo for detectado, atira
+        fire(3);
+
+        // Calcula a direção para se mover
+        moveDirection = -moveDirection;
+
+        // Move-se para trás para desviar de tiros
+        setBack(50 * moveDirection);
+        execute();
+    }
+
+    public void onHitByBullet(HitByBulletEvent e) {
+        // Se for atingido por um tiro, move-se aleatoriamente
+        setAhead(100 * Math.random() * moveDirection);
+        execute();
+    }
+
+    public void onHitWall(HitWallEvent e) {
+        // Se bater na parede, vira na direção oposta
+        moveDirection = -moveDirection;
+    }
+
+    public void onHitRobot(HitRobotEvent e) {
+        // Se colidir com um robô, desvia
+        if (e.isMyFault()) {
+            moveDirection = -moveDirection;
+            setBack(50 * moveDirection);
+            execute();
+        }
+    }
+
+    public void onBulletHit(BulletHitEvent e) {
+        // Se acertar um tiro, comemore!
+        turnRight(360);
+        ahead(100);
+    }
+}

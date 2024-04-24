@@ -1,0 +1,124 @@
+import robocode.*;
+
+public class RoboAzulCobalto extends AdvancedRobot {
+
+    // Variables for movement and enemy detection
+    private int moveDirection = 1; // Direction of movement (1 forward, -1 backward)
+    private double enemyDistance = 0; // Distance to the nearest enemy
+    private double enemyBearing = 0; // Angle of the nearest enemy relative to our robot
+
+    // Variables for shield and traps
+    private boolean shieldActive = false; // Flag to indicate if shield is active
+    private int trapCount = 0; // Number of traps placed
+
+    // Constants for gun and trap settings
+    private static final int NUM_CANNONS = 6; // Number of cannons
+    private static final double FIRE_POWER = 3.0; // Power of each cannon shot
+    private static final int TRAP_ENERGY = 50; // Energy per trap
+    private static final int TRAP_SPACING = 100; // Distance between traps
+
+    public void run() {
+        // Set robot colors
+        setBodyColor(java.awt.Color.blue);
+        setGunColor(java.awt.Color.blue);
+        setRadarColor(java.awt.Color.blue);
+        setBulletColor(java.awt.Color.blue);
+        setScanColor(java.awt.Color.blue);
+
+        // Set number of cannons and fire power
+        setNumCanNons(NUM_CANNONS);
+        setFirePower(FIRE_POWER);
+
+        // Main robot loop
+        while (true) {
+            // Update enemy information based on radar scan
+            updateEnemyInfo();
+
+            // Activate shield if enemy is close
+            if (enemyDistance < 100) {
+                activateShield();
+            } else {
+                deactivateShield();
+            }
+
+            // Lay traps if trap count is less than 20
+            if (trapCount < 20) {
+                layTrap();
+                trapCount++;
+            }
+
+            // Move and adjust based on enemy position
+            moveAndAdjust();
+
+            // Fire at enemies if in range
+            fireAtEnemies();
+
+            // Execute actions
+            execute();
+        }
+    }
+
+    private void updateEnemyInfo() {
+        // Get information about the nearest enemy
+        ScannedRobotEvent scanEvent = getScannedRobotEvent();
+        if (scanEvent != null) {
+            enemyDistance = scanEvent.getDistance();
+            enemyBearing = scanEvent.getBearing();
+        } else {
+            enemyDistance = 0;
+            enemyBearing = 0;
+        }
+    }
+
+    private void activateShield() {
+        // Turn on shield and set it to maximum energy
+        shieldActive = true;
+        setEnergy(getEnergy() + 100);
+    }
+
+    private void deactivateShield() {
+        // Turn off shield
+        shieldActive = false;
+    }
+
+    private void layTrap() {
+        // Place a trap at current location with specified energy
+        addTrap(new Trap(TRAP_ENERGY), getX(), getY());
+    }
+
+    private void moveAndAdjust() {
+        // Move forward or backward based on movement direction
+        setAhead(100 * moveDirection);
+
+        // Adjust movement based on enemy position
+        if (enemyDistance < 200) {
+            // If enemy is close, move perpendicular to their direction
+            double angle = Math.atan2(enemyBearing, 0);
+            double perpendicularAngle = angle + Math.PI / 2;
+            setTurnRight(normalizeAngle(perpendicularAngle - getHeading()));
+        } else {
+            // If enemy is far, resume normal movement
+            setTurnRight(0);
+        }
+    }
+
+    private void fireAtEnemies() {
+        // If enemy is within range and shield is not active, fire all cannons
+        if (enemyDistance < 300 && !shieldActive) {
+            for (int i = 0; i < NUM_CANNONS; i++) {
+                fire(FIRE_POWER);
+            }
+        }
+    }
+
+    private double normalizeAngle(double angle) {
+        // Normalize angle to be between -180 and 180 degrees
+        while (angle < -180) {
+            angle += 360;
+        }
+        while (angle > 180) {
+            angle -= 360;
+        }
+        return angle;
+    }
+}
